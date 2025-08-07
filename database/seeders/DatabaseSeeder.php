@@ -2,22 +2,48 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\ScormPackage;
+use App\Models\ScormUserStat;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Создаем тестовые пакеты
+        $packages = [
+            [
+                'title' => 'Тестовый курс по безопасности',
+                'original_filename' => 'safety-course.zip',
+                'path' => 'scorm/test-1',
+                'file_size' => 5242880
+            ],
+            [
+                'title' => 'Введение в Laravel',
+                'original_filename' => 'laravel-intro.zip',
+                'path' => 'scorm/test-2',
+                'file_size' => 3145728
+            ],
+            [
+                'title' => 'Основы PHP',
+                'original_filename' => 'php-basics.zip',
+                'path' => 'scorm/test-3',
+                'file_size' => 4194304
+            ]
+        ];
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        foreach ($packages as $packageData) {
+            $package = ScormPackage::create($packageData);
+            
+            // Создаем статистику для некоторых пакетов
+            if ($package->id <= 2) {
+                ScormUserStat::create([
+                    'user_id' => 1,
+                    'scorm_package_id' => $package->id,
+                    'views_count' => rand(1, 10),
+                    'last_viewed_at' => now()->subHours(rand(1, 48))
+                ]);
+            }
+        }
     }
 }

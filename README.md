@@ -1,61 +1,165 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SCORM Viewer
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Система для загрузки и просмотра SCORM пакетов с базовой статистикой.
 
-## About Laravel
+## Требования
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Docker и Docker Compose
+- 2GB свободной памяти
+- Порт 8080 должен быть свободен
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Установка
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. Клонируйте репозиторий:
+```bash
+git clone https://github.com/KhalesArtem/testZipArhive.git
+cd testZipArhive
+```
 
-## Learning Laravel
+2. Запустите Docker контейнеры:
+```bash
+docker compose up -d --build
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+3. Установите зависимости Laravel (если еще не установлены):
+```bash
+docker exec scorm-app composer install
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+4. Скопируйте .env файл:
+```bash
+cp .env.example .env
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+5. Сгенерируйте ключ приложения:
+```bash
+docker exec scorm-app php artisan key:generate
+```
 
-## Laravel Sponsors
+6. Выполните миграции:
+```bash
+docker exec scorm-app php artisan migrate
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+7. (Опционально) Загрузите тестовые данные:
+```bash
+docker exec scorm-app php artisan db:seed
+```
 
-### Premium Partners
+8. Создайте символическую ссылку для storage:
+```bash
+docker exec scorm-app php artisan storage:link
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+9. **ВАЖНО!** Запустите воркер очереди для обработки загруженных файлов:
+```bash
+docker compose exec -d app php artisan queue:work --daemon --tries=3 --timeout=600
+```
 
-## Contributing
+## Использование
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1. Откройте браузер и перейдите на http://localhost:8080
+2. Нажмите "Загрузить SCORM пакет"
+3. Выберите ZIP файл с SCORM контентом
+4. После загрузки нажмите "Открыть" для просмотра
 
-## Code of Conduct
+## Функционал
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+✅ Загрузка SCORM пакетов (ZIP файлы до 100MB)  
+✅ Валидация SCORM (проверка наличия imsmanifest.xml)  
+✅ Просмотр SCORM контента в iframe  
+✅ Статистика просмотров для каждого пакета  
+✅ Удаление пакетов  
 
-## Security Vulnerabilities
+## Структура БД
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- `scorm_packages` - информация о загруженных пакетах
+- `scorm_user_stats` - статистика просмотров
 
-## License
+## Команды Docker
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+# Запуск контейнеров
+docker compose up -d
+
+# Остановка контейнеров
+docker compose down
+
+# Просмотр логов
+docker compose logs -f app
+
+# Вход в контейнер
+docker exec -it scorm-app bash
+
+# Выполнение Artisan команд
+docker exec scorm-app php artisan [command]
+
+# Запуск воркера очереди в фоне (обязательно для обработки файлов!)
+docker compose exec -d app php artisan queue:work --daemon --tries=3 --timeout=600
+
+# Запуск воркера с выводом в консоль (чтобы видеть процесс обработки)
+docker compose exec app php artisan queue:work --tries=3 --timeout=600
+
+# Проверка, работает ли воркер
+docker compose exec app ps aux | grep -E "artisan queue|PID"
+
+# Остановка воркера
+docker compose exec app php artisan queue:restart
+```
+
+## Проверка кода с PHPStan
+
+```bash
+# Запуск проверки
+docker exec scorm-app composer phpstan
+
+# Очистка кеша PHPStan
+docker exec scorm-app composer phpstan-clear
+```
+
+[Документация PHPStan](https://phpstan.org/user-guide/getting-started)
+
+## Доступ к базе данных
+
+Для подключения к MySQL используйте:
+- **Host:** localhost
+- **Port:** 3307
+- **Database:** scorm_db
+- **Username:** scorm_user
+- **Password:** password
+
+## Известные ограничения
+
+- Максимальный размер файла: 100MB
+- Поддерживаются только SCORM 1.2 и SCORM 2004
+- User ID зафиксирован как 1 (без системы авторизации)
+
+## Тестирование
+
+Для тестирования можно использовать бесплатные SCORM пакеты с:
+- https://scorm.com/scorm-explained/technical-scorm/golf-examples/
+
+## Структура проекта
+
+```
+├── app/
+│   ├── Http/Controllers/ScormController.php
+│   ├── Models/
+│   │   ├── ScormPackage.php
+│   │   └── ScormUserStat.php
+│   └── Services/ScormService.php
+├── database/
+│   ├── migrations/
+│   └── seeders/DatabaseSeeder.php
+├── resources/views/
+│   ├── layouts/app.blade.php
+│   └── scorm/
+│       ├── index.blade.php
+│       ├── upload.blade.php
+│       └── viewer.blade.php
+├── routes/web.php
+├── docker-compose.yml
+├── Dockerfile
+├── phpstan.neon
+└── README.md
+```
