@@ -163,3 +163,7 @@ docker exec scorm-app composer phpstan-clear
 ├── phpstan.neon
 └── README.md
 ```
+
+## Пример интерфейса
+
+![SCORM Viewer Interface]![img1.png](img1.png))
